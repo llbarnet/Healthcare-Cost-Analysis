@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+  <meta charset="utf-8">
+  <title>Choropleth Map of State Data</title>
+  <link href="https://fonts.googleapis.com/css?family=Alata&display=swap" rel="stylesheet">
+</head>
+<style>
+div.tooltip {
+  position: absolute;
+  left: 10px;
+  text-align: center;
+  height: 16px;
+  padding: 1px;
+  font-size: 11px;
+  font-family: 'Alata', sans-serif;
+  background: #FFFFFF;
+  pointer-events: none;
+}
+/* body { background: #333; } */
+path { stroke: #333; stroke-width: 1; }
+path:hover { stroke-width: 3; }
+.TandC {
+  display: inline;
+}
+.Projection {
+  display: inline;
+}
+
+.Table {float:left;}
+.Choropleth {float:right}
+.dropdown-content {
+  /* float: right;
+  padding-right: 200px; */
+  text-align: center;
+}
+.intro {
+  text-align:center;
+  font-family: 'Alata';
+  padding-bottom: 50px;
+}
+
+
+</style>
+
+<body>
+<div class='intro'>
+  <h1>Health Care Cost Analysis</h1>
+  <p>HERE WILL BE A DESCRIPTION OF THE PAGE, WHAT WE DID, WHAT YOU CAN FIND, BRIEF HOW TO</p>
+</div>
+
+<div class='TandC'>
+  <h2 style="text-align:left;font-family: 'Alata';">Health Care Cost Differences by State and County</h2>
+  <div id="menuDropdown" class="dropdown-content"></div>
+  <div class='Table'></div>
+  <div class='Choropleth'></div>
+</div>
+
+<div class='Projection'>
+  <h1>HERE WILL BE ALL THINGS RELATED TO THE PROJECTION, YOU WILL WANT TO CREATE THE Divs YOU NEED AND APPEND YOUR SVGs OF d3 TO THESE
+  </h1>
+</div>
+
+
+<script src="//d3js.org/d3.v4.min.js"></script>
+<script src="//d3js.org/topojson.v1.min.js"></script>
+
+<script>
+
+// Defining the width, height, and ratios of table and choropleth SVGs
+var width = 950
+var height = 600
+var padding = 20
+var widthT = 470
+
+
+// Appending the tooltip, the geoAlbers projection, the choropleth paths, the choropleth, and the table to the appropriate DIVS and Body.
+var div = d3.select("body").append("div")
+  .attr("class", "tooltip")
+  .style("opacity", 0);
+
+var projection = d3.geoAlbersUsa()
+    .precision(0)
+    .scale(height * 2).translate([width / 2, height / 2])
+
+var path = d3.geoPath().projection(projection)
+
+var svg = d3.select('.Choropleth')
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height)
+
+var svg1 = d3.select('.Table')
+    .append('svg')
+    .attr('width', widthT)
+    .attr('height', height)
+    .attr('fill', 'black')
+
+// Loading the data, the states.json, and counties.json file into the queue to then load as a results list on initialize.
+d3.queue()
+    .defer(d3.csv, 'inpatient_agg.csv', function (d) {
+        return {
+            id: (d.code + d.county),
+            state: d.code,
+            state_name: d['Provider.State'],
+            county: (d.county),
+            procedure: d['DRG.Definition'],
+            cost: +d.mean
+        }
+    })
+    .defer(d3.json, 'states-10m.json')
+    .defer(d3.json, 'counties-10m.json')
+    .awaitAll(initialize)
+
+
+//Begin the initialize function, the data and json files are loaded in as 'results' and everything involving the d3 visualization and data will be completed within this function.
+function initialize(error, results) {
+    if (error) { throw error }
+
+    // The variables taking the results list and turning them into the appropriate data/choropleth.info needed
+    var dataAll = results[0]
+    var states = topojson.feature(results[1], results[1].objects.states).features
+    var counties = topojson.feature(results[2], results[2].objects.counties).features
+    // ------this creates a data file that only includes the procedure selected in the dropdown
+    var data = results[0].filter(function (d) {return d.procedure == X    });
+
+//The dropdown menue variable
+    var dropmenu = d3.select("#menuDropdown");
+     dropmenu
+    .append("select")
+    .attr("id", "menuDropdown")
+    .selectAll("option")
+    .data(d3.map(dataAll, function(d){return d.procedure}).keys())
+    .enter()
+    .append("option")
+    .attr("value", function(d) {return d})
+    .text(function(d) {
+      L = []
+      L.push(d)
+      return L.sort()});
+//setting X needed for update function to be the value in the dropdown
+var X = d3.select("#menuDropdown").select("select").property("value")
+
+//loading the window before the update function is run
+d3.select(window).on("load", update(X));
+
+//the function that holds the choropleth and table functions and visualizations
+function update(X) {
+
+    var data = results[0].filter(function (d) {return d.procedure == X});
+
+//adding data as a key called 'medData' to the states which includes the neccessary geopath data as well as an average price over the state's counties for the selected procedure
+    states.forEach(function (f) {
+      var avgSC = 0;
+      var count = 0;
+      data.forEach(function(d) {
+
+        if(f.id === d.state){
+          count += 1
+          avgSC += d.cost
+        }
+
+        if(count == 0) {
+          f.medData = 0;
+        }
+      })
+      f.medData = avgSC/count})
+
+//adding data as a key called 'medData' to the counties which includes the neccessary geopath data as well as the price for the selected procedure
+    counties.forEach(function (f) {f.medData = data.find(function (d) {
+          var nameC = f.properties.name.toUpperCase();
+          return nameC === d.county && f.id.slice(0,2) === d.state})})
+
+//Neccessary variables and color scales to fill the states color based on the medData variable
+var mincostS = d3.min(states, function(d){if (isNaN(d.medData)){}
+else{return d.medData;}});
+
+var maxcostS = d3.max(states, function(d){if (isNaN(d.medData)){}
+else{return d.medData;}});
+
+
+var color_states = d3.scaleQuantize()
+    .domain([mincostS, maxcostS])
+    .range(['#feedde','#fdd0a2','#fdae6b','#fd8d3c','#f16913','#d94801','#8c2d04'])
+
+  //defining the state paths, and their fill based on average price of selected procedure
+    var statePaths = svg.selectAll('.state')
+        .data(states)
+        .enter().append('path')
+        .attr('class', 'state')
+        .attr('d', path)
+        .style('fill', function (d) {
+          if (isNaN(d.medData)){return '#808080';}
+          else{return color_states(d.medData);}
+        })
+        .on("mouseover", function(d) {
+            div.transition().duration(300).style("opacity", 1)
+            div.text(function(){return d.properties.name})
+            .style("left", (d3.event.pageX -10) + "px")
+            .style("top", (d3.event.pageY) + "px");
+          })
+        .on("mouseout", function(d) {
+          div.transition().duration(300).style("opacity", 0); })
+        .on('click', function (d) { stateZoom(d.id) });
+
+//The function that defines a full country view
+    function usZoom() {
+        var t = d3.transition().duration(800)
+
+        projection.scale(height * 2).translate([width / 2, height / 2])
+
+        statePaths.transition(t)
+            .attr('d', path)
+            .style('fill', function (d) {
+              if (isNaN(d.medData)){return '#808080';}
+              else{return color_states(d.medData);}
+            })
+
+        svg.selectAll('.county')
+            .data([])
+            .exit().transition(t)
+            .attr('d', path)
+            .style('opacity', 0)
+            .remove()
+    };
+
+    function stateZoom(id) {
+        var state = states.find(function (d) { return d.id === id })
+        var stateCounties = counties.filter(function (d) {
+          if(d.id > id*1000  && d.id < id*1000 + 1000){return d.id}
+        });
+
+        var t = d3.transition().duration(800)
+
+        var mincost = d3.min(stateCounties, function(d){if (d.medData === undefined){}
+        else{return d.medData.cost;}});
+        console.log(mincost)
+        var maxcost = d3.max(stateCounties, function(d){if (d.medData === undefined){}
+        else{return d.medData.cost;}});
+        console.log(maxcost)
+
+        var color = d3.scaleQuantize()
+            .domain([mincost, maxcost])
+            // .range(['#1a9850', '#91cf60', '#d9ef8b', '#ffffbf', '#fee08b', '#fc8d59', '#d73027'])
+            .range(['#feedde','#fdd0a2','#fdae6b','#fd8d3c','#f16913','#d94801','#8c2d04'])
+        var countyPaths = svg.selectAll('.county')
+            .data(stateCounties, function (d) { return d.id})
+
+        var enterCountyPaths = countyPaths.enter().append('path')
+            .attr('class', 'county')
+            .attr('d', path)
+            .style('fill', function (d) {
+              if (d.medData === undefined){return '#808080';}
+              else{return color(d.medData.cost);}
+            })
+            .style('opacity', 0)
+            .on("mouseover", function(d) {
+                div.transition().duration(300).style("opacity", 1)
+                div.text(function(){if (d.medData === undefined){return d.properties.name+" County, No Cost Data for Procedure";}
+                  else{return d.properties.name+" County $"+d.medData.cost;}})
+                .style("left", (d3.event.pageX) + "px")
+                .style("top", (d3.event.pageY) + "px");
+              })
+            .on("mouseout", function(d) {
+
+              div.transition().duration(300).style("opacity", 0); })
+            .on('click', function () { usZoom() });
+
+        projection.fitExtent(
+            [[padding, padding], [width - padding, height - padding]],
+            state
+        )
+
+        statePaths.transition(t)
+            .attr('d', path)
+            .style('fill', '#444')
+
+        enterCountyPaths.transition(t)
+            .attr('d', path)
+            .style('opacity', 1)
+
+        countyPaths.exit().transition(t)
+            .attr('d', path)
+            .style('opacity', 0)
+            .remove()
+    };
+    //
+    // var header = table.append("thead").append("tr");
+    // header
+    //         .selectAll("th")
+    //         .data(["Region", "1990", "2015", "Difference"])
+    //         .enter()
+    //         .append("th")
+    //         .text(function(d) { return d; });
+    // var tablebody = table.append("tbody");
+    // rows = tablebody
+    //         .selectAll("tr")
+    //         // .data(myArray)
+    //         .enter()
+    //         .append("tr");
+    // // We built the rows using the nested array - now each row has its own array.
+    // cells = rows.selectAll("td")
+    //     // each row has data associated; we get it and enter it for the cells.
+    //         .data(function(d) {
+    //             console.log(d);
+    //             return d;
+    //         })
+    //         .enter()
+    //         .append("td")
+    //         .text(function(d) {
+    //             return d;
+    //         });
+
+
+
+
+
+
+
+
+    // update.fullstates = fullstates
+    dropmenu.on("change", function(d) {
+      var selectedGroup = (d3.select(this).select("select").property("value"));
+      svg.selectAll('.state').remove()
+      usZoom()
+      update(selectedGroup)
+      // update.fullstates()
+    });
+}
+//END ^^^ Update Function includes 99% of choropleth and table
+
+
+//\/\/\/\/\/BEGIN ALL PROJECTION D3. ISIDE THE 'initialize' FUNCTION
+//       PROJECTION
+//
+//
+//
+//
+
+};
+</script>
+<!-- end script -->
+
+</body>
