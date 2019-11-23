@@ -1,47 +1,18 @@
 <!DOCTYPE html>
+<html lang="en" dir="ltr">
 <meta charset="utf-8">
 <head>
   <meta charset="utf-8">
   <title>Choropleth Map of State Data</title>
   <link href="https://fonts.googleapis.com/css?family=Alata&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet" />
+  <link rel="stylesheet" type=text/css href="/map_viz.css">
+  <script src="//d3js.org/d3.v4.min.js"></script>
+  <script src="//d3js.org/topojson.v1.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
+
 </head>
-<style>
-div.tooltip {
-  position: absolute;
-  left: 10px;
-  text-align: center;
-  height: 16px;
-  padding: 1px;
-  font-size: 11px;
-  font-family: 'Alata', sans-serif;
-  background: #FFFFFF;
-  pointer-events: none;
-}
-/* body { background: #333; } */
-path { stroke: #333; stroke-width: 1; }
-path:hover { stroke-width: 3; }
-.TandC {
-  display: inline;
-}
-.Projection {
-  display: inline;
-}
-
-.Table {float:left;}
-.Choropleth {float:right}
-.dropdown-content {
-  /* float: right;
-  padding-right: 200px; */
-  text-align: center;
-}
-.intro {
-  text-align:center;
-  font-family: 'Alata';
-  padding-bottom: 50px;
-}
-
-
-</style>
 
 <body>
 <div class='intro'>
@@ -50,8 +21,10 @@ path:hover { stroke-width: 3; }
 </div>
 
 <div class='TandC'>
-  <h2 style="text-align:left;font-family: 'Alata';">Health Care Cost Differences by State and County</h2>
-  <div id="menuDropdown" class="dropdown-content"></div>
+  <h2>Health Care Cost Differences by State and County</h2>
+  <p>Data was selected from Part A Inpatient Medicare and Medicaid data for 2017. There are over 500 unique procedures that can be visualized in the choropleth by means of the dropdown menu below. States and counties are colorized from cream to dark red and lowest to highest priced respectively. States or counties that appear grey have no data associated for the selected procedure. Meaning, no procedure was performed on an individual seeking payment through medicare or medicaid in that given county or state for the selected procedure. </P>
+  <select id="menuDropdown" class="dropdown-content"><option>Search a procedure...</option></select>
+  <input name="selectP" type="hidden" id="selectP">
   <div class='Table'></div>
   <div class='Choropleth'></div>
 </div>
@@ -61,7 +34,7 @@ path:hover { stroke-width: 3; }
   </h1>
 </div>
 
-
+<!-- Beginning of Script -->
 <script src="//d3js.org/d3.v4.min.js"></script>
 <script src="//d3js.org/topojson.v1.min.js"></script>
 
@@ -94,7 +67,7 @@ var svg1 = d3.select('.Table')
     .append('svg')
     .attr('width', widthT)
     .attr('height', height)
-    .attr('fill', 'black')
+
 
 // Loading the data, the states.json, and counties.json file into the queue to then load as a results list on initialize.
 d3.queue()
@@ -124,23 +97,33 @@ function initialize(error, results) {
     // ------this creates a data file that only includes the procedure selected in the dropdown
     var data = results[0].filter(function (d) {return d.procedure == X    });
 
-//The dropdown menue variable
-    var dropmenu = d3.select("#menuDropdown");
-     dropmenu
-    .append("select")
-    .attr("id", "menuDropdown")
-    .selectAll("option")
-    .data(d3.map(dataAll, function(d){return d.procedure}).keys())
-    .enter()
-    .append("option")
-    .attr("value", function(d) {return d})
-    .text(function(d) {
-      L = []
-      L.push(d)
-      return L.sort()});
-//setting X needed for update function to be the value in the dropdown
-var X = d3.select("#menuDropdown").select("select").property("value")
+//The dropdown menu variable
+var LProc = []
+function dropdown(dataAll){
+  //create funciton to get list of procedures
+  var data = d3.map(dataAll, function(d){return d.procedure}).keys()
+  data.forEach(function(d){
+  LProc.push(d)}
+  )
+}
 
+dropdown(dataAll)
+
+
+$('#menuDropdown').empty();
+$.each(LProc, function(i, p) {
+    $('#menuDropdown').append($('<option></option>').val(p).html(p));
+});
+
+$("#menuDropdown").select2();
+
+
+// var dropmenu = d3.select("#selectP");
+
+//setting X needed for update function to be the value in the dropdown
+// var X = d3.select("#menuDropdown").select("select").property("value")
+var X = $('#menuDropdown').val()
+console.log(X)
 //loading the window before the update function is run
 d3.select(window).on("load", update(X));
 
@@ -224,6 +207,7 @@ var color_states = d3.scaleQuantize()
             .remove()
     };
 
+//The function that will zoom on to the appropriate counties selected by state
     function stateZoom(id) {
         var state = states.find(function (d) { return d.id === id })
         var stateCounties = counties.filter(function (d) {
@@ -241,8 +225,8 @@ var color_states = d3.scaleQuantize()
 
         var color = d3.scaleQuantize()
             .domain([mincost, maxcost])
-            // .range(['#1a9850', '#91cf60', '#d9ef8b', '#ffffbf', '#fee08b', '#fc8d59', '#d73027'])
             .range(['#feedde','#fdd0a2','#fdae6b','#fd8d3c','#f16913','#d94801','#8c2d04'])
+
         var countyPaths = svg.selectAll('.county')
             .data(stateCounties, function (d) { return d.id})
 
@@ -284,18 +268,18 @@ var color_states = d3.scaleQuantize()
             .style('opacity', 0)
             .remove()
     };
-    //
-    // var header = table.append("thead").append("tr");
+
+    // var header = Table.append("thead").append("tr");
     // header
     //         .selectAll("th")
     //         .data(["Region", "1990", "2015", "Difference"])
     //         .enter()
     //         .append("th")
     //         .text(function(d) { return d; });
-    // var tablebody = table.append("tbody");
+    // var tablebody = Table.append("tbody");
     // rows = tablebody
     //         .selectAll("tr")
-    //         // .data(myArray)
+    //         .data(myArray)
     //         .enter()
     //         .append("tr");
     // // We built the rows using the nested array - now each row has its own array.
@@ -313,18 +297,13 @@ var color_states = d3.scaleQuantize()
 
 
 
-
-
-
-
-
-    // update.fullstates = fullstates
-    dropmenu.on("change", function(d) {
-      var selectedGroup = (d3.select(this).select("select").property("value"));
+    $('#menuDropdown').on("change", function(d) {
+      // var selectedGroup = (d3.select(this).select("select").property("value"));
+      var selectedGroup = $('#menuDropdown').val();
       svg.selectAll('.state').remove()
       usZoom()
       update(selectedGroup)
-      // update.fullstates()
+      console.log(selectedGroup)
     });
 }
 //END ^^^ Update Function includes 99% of choropleth and table
@@ -342,3 +321,4 @@ var color_states = d3.scaleQuantize()
 <!-- end script -->
 
 </body>
+</html>

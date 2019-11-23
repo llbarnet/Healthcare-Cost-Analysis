@@ -1,0 +1,46 @@
+div.tooltip {
+  position: absolute;
+  left: 10px;
+  text-align: center;
+  height: 16px;
+  padding: 1px;
+  font-size: 11px;
+  font-family: 'Alata', sans-serif;
+  background: #FFFFFF;
+  pointer-events: none;
+}
+body { background: #333; }
+path { stroke: #333; stroke-width: 1; }
+path:hover { stroke-width: 3; }
+
+h1, p {
+  font-family: 'Alata';
+  color: white;
+  text-align: center;
+}
+
+h2 {
+style="text-align:left;
+font-family: 'Alata';
+color: white;
+
+}
+
+
+.TandC {
+  display: inline;
+}
+.Projection {
+  display: inline-grid;
+}
+
+.Table {float:left;}
+.Choropleth {float:right}
+.dropdown-content {
+  text-align: center;
+}
+.intro {
+  text-align:center;
+  font-family: 'Alata';
+  padding-bottom: 50px;
+}
