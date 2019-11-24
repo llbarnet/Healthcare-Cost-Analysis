@@ -26,7 +26,6 @@
   <select id="menuDropdown" class="dropdown-content"><option>Search a procedure...</option></select>
   <input name="selectP" type="hidden" id="selectP">
   <div class='Table'>
-    <p style='text-align: center;'>Most Expensive</p>
   </div>
   <div class='Choropleth'></div>
 </div>
@@ -46,7 +45,7 @@
 var width = 950
 var height = 600
 var padding = 20
-var heightT = 350
+var heightT = 200
 var widthT = 350
 
 
@@ -182,31 +181,44 @@ var color_states = d3.scaleQuantize()
           div.transition().duration(300).style("opacity", 0); })
         .on('click', function (d) { stateZoom(d.id) });
 
-var table = d3.select(".Table")
+//Adding a Table for state view
+
+var table1 = d3.select(".Table")
           .append('table')
           .attr('width', widthT)
           .attr('height', heightT);
 
-  var columns = ['State', 'Cost']
-  var statesT = []
+var table2 = d3.select(".Table")
+          .append('table')
+          .attr('width', widthT)
+          .attr('height', heightT);
+
+  var columnsE = ['Highest Priced States', 'Cost']
+  var columnsC = ['Lowest Priced States', 'Cost']
+  var statesE = []
+  var statesC = []
   function stateT(states){
       var data = states.filter(function (d) {if (isNaN(d.medData)){}
             else{return d;} });
     data.forEach(function(d){
-      statesT.push([d.properties.name, parseInt(d.medData)])})};
+      statesE.push([d.properties.name, parseInt(d.medData)])
+      statesC.push([d.properties.name, parseInt(d.medData)])})};
   stateT(states)
-  statesT = statesT.sort(function(a, b) {return d3.descending(a[1], b[1]);})
-  console.log(statesT)
-      table.append('thead').append('tr')
+  statesE.sort(function(a, b) {return d3.descending(a[1], b[1]);});
+  statesC.sort(function(a, b) {return d3.ascending(a[1], b[1]);});
+  console.log(statesE)
+//expensive states
+      table1.append('thead').append('tr')
           .selectAll('th')
-          .data(columns)
+          .data(columnsE)
           .enter()
           .append('th')
           .text(function(d) {return d});
-      var tablebody = table.append("tbody");
+
+      var tablebody = table1.append("tbody");
       rows = tablebody
               .selectAll("tr")
-              .data(statesT.slice(0,10))
+              .data(statesE.slice(0,5))
               .enter()
               .append("tr")
       cells = rows.selectAll("td")
@@ -215,7 +227,26 @@ var table = d3.select(".Table")
               .append("td")
               .text(function(d) {
                 return d});
+//cheapest states
+      table2.append('thead').append('tr')
+          .selectAll('th')
+          .data(columnsC)
+          .enter()
+          .append('th')
+          .text(function(d) {return d});
 
+      var tablebody2 = table2.append("tbody");
+      rows = tablebody2
+              .selectAll("tr")
+              .data(statesC.slice(0,5))
+              .enter()
+              .append("tr")
+      cells = rows.selectAll("td")
+          .data(function(d){return d})
+              .enter()
+              .append("td")
+              .text(function(d) {
+                return d});
 
 
 
@@ -238,39 +269,72 @@ var table = d3.select(".Table")
             .attr('d', path)
             .style('opacity', 0)
             .remove()
-            var table = d3.select(".Table")
-                      .append('table')
-                      .attr('width', widthT)
-                      .attr('height', heightT);
 
-              var columns = ['State', 'Cost']
-              var statesT = []
-              function stateT(states){
-                  var data = states.filter(function (d) {if (isNaN(d.medData)){}
-                        else{return d;} });
-                data.forEach(function(d){
-                  statesT.push([d.properties.name, parseInt(d.medData)])})};
-              stateT(states)
-              statesT = statesT.sort(function(a, b) {return d3.descending(a[1], b[1]);})
-              console.log(statesT)
-                  table.append('thead').append('tr')
-                      .selectAll('th')
-                      .data(columns)
-                      .enter()
-                      .append('th')
-                      .text(function(d) {return d});
-                  var tablebody = table.append("tbody");
-                  rows = tablebody
-                          .selectAll("tr")
-                          .data(statesT.slice(0,10))
-                          .enter()
-                          .append("tr")
-                  cells = rows.selectAll("td")
-                      .data(function(d){return d})
-                          .enter()
-                          .append("td")
-                          .text(function(d) {
-                            return d});
+      //Add a table for zooming back out
+      var table1 = d3.select(".Table")
+                .append('table')
+                .attr('width', widthT)
+                .attr('height', heightT);
+
+      var table2 = d3.select(".Table")
+                .append('table')
+                .attr('width', widthT)
+                .attr('height', heightT);
+
+        var columnsE = ['Highest Priced States', 'Cost']
+        var columnsC = ['Lowest Priced States', 'Cost']
+        var statesE = []
+        var statesC = []
+        function stateT(states){
+            var data = states.filter(function (d) {if (isNaN(d.medData)){}
+                  else{return d;} });
+          data.forEach(function(d){
+            statesE.push([d.properties.name, parseInt(d.medData)])
+            statesC.push([d.properties.name, parseInt(d.medData)])})};
+        stateT(states)
+        statesE.sort(function(a, b) {return d3.descending(a[1], b[1]);});
+        statesC.sort(function(a, b) {return d3.ascending(a[1], b[1]);});
+        console.log(statesE)
+      //expensive states
+            table1.append('thead').append('tr')
+                .selectAll('th')
+                .data(columnsE)
+                .enter()
+                .append('th')
+                .text(function(d) {return d});
+
+            var tablebody = table1.append("tbody");
+            rows = tablebody
+                    .selectAll("tr")
+                    .data(statesE.slice(0,5))
+                    .enter()
+                    .append("tr")
+            cells = rows.selectAll("td")
+                .data(function(d){return d})
+                    .enter()
+                    .append("td")
+                    .text(function(d) {
+                      return d});
+      //cheapest states
+            table2.append('thead').append('tr')
+                .selectAll('th')
+                .data(columnsC)
+                .enter()
+                .append('th')
+                .text(function(d) {return d});
+
+            var tablebody2 = table2.append("tbody");
+            rows = tablebody2
+                    .selectAll("tr")
+                    .data(statesC.slice(0,5))
+                    .enter()
+                    .append("tr")
+            cells = rows.selectAll("td")
+                .data(function(d){return d})
+                    .enter()
+                    .append("td")
+                    .text(function(d) {
+                      return d});
 
 
       };
@@ -337,44 +401,72 @@ var table = d3.select(".Table")
             .style('opacity', 0)
             .remove()
 
-            var table = d3.select(".Table")
+    //adding a table of expensive and cheapest counties
+
+            var table1 = d3.select(".Table")
                       .append('table')
                       .attr('width', widthT)
                       .attr('height', heightT);
 
-              var columns = ['County', 'Cost']
-              var countiesT = []
+            var table2 = d3.select(".Table")
+                      .append('table')
+                      .attr('width', widthT)
+                      .attr('height', heightT);
+
+              var columnsE = ['Highest Priced Counties', 'Cost']
+              var columnsC = ['Lowest Priced Counties', 'Cost']
+              var countiesE = []
+              var countiesC = []
               function countyT(stateCounties){
                   var data = stateCounties.filter(function (d) {if (d.medData === undefined){}
                     else{return d}});
                 data.forEach(function(d){
-                  countiesT.push([d.properties.name, +d.medData.cost])})};
+                  countiesE.push([d.properties.name, +d.medData.cost])
+                  countiesC.push([d.properties.name, +d.medData.cost])
+                })};
               countyT(stateCounties)
-              countiesT = countiesT.sort(function(a, b) {return d3.descending(a[1], b[1]);})
-              console.log(countiesT)
-                  table.append('thead').append('tr')
-                      .selectAll('th')
-                      .data(columns)
-                      .enter()
-                      .append('th')
-                      .text(function(d) {return d});
-                  var tablebody = table.append("tbody");
-                  rows = tablebody
-                          .selectAll("tr")
-                          .data(countiesT.slice(0,10))
-                          .enter()
-                          .append("tr")
-                  cells = rows.selectAll("td")
-                      .data(function(d){return d})
-                          .enter()
-                          .append("td")
-                          .text(function(d) {
-                            return d});
+              countiesE.sort(function(a, b) {return d3.descending(a[1], b[1]);})
+              countiesC.sort(function(a, b) {return d3.ascending(a[1], b[1]);})
+              //expensive counties
+                    table1.append('thead').append('tr')
+                        .selectAll('th')
+                        .data(columnsE)
+                        .enter()
+                        .append('th')
+                        .text(function(d) {return d});
 
+                    var tablebody = table1.append("tbody");
+                    rows = tablebody
+                            .selectAll("tr")
+                            .data(countiesE.slice(0,5))
+                            .enter()
+                            .append("tr")
+                    cells = rows.selectAll("td")
+                        .data(function(d){return d})
+                            .enter()
+                            .append("td")
+                            .text(function(d) {
+                              return d});
+              //cheapest counties
+                    table2.append('thead').append('tr')
+                        .selectAll('th')
+                        .data(columnsC)
+                        .enter()
+                        .append('th')
+                        .text(function(d) {return d});
 
-
-
-
+                    var tablebody2 = table2.append("tbody");
+                    rows = tablebody2
+                            .selectAll("tr")
+                            .data(countiesC.slice(0,5))
+                            .enter()
+                            .append("tr")
+                    cells = rows.selectAll("td")
+                        .data(function(d){return d})
+                            .enter()
+                            .append("td")
+                            .text(function(d) {
+                              return d});
     };
 
 
