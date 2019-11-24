@@ -26,6 +26,19 @@ color: white;
 
 }
 
+th {
+  text-align: left;
+  font-family: 'Alata';
+  color: white;
+font-size: 16px;}
+
+tr {
+  font-size: 12px;
+  text-align: left;
+  font-family: 'Alata';
+  color: white;
+}
+
 
 .TandC {
   display: inline;
@@ -34,7 +47,11 @@ color: white;
   display: inline-grid;
 }
 
-.Table {float:left;}
+.Table {
+float:left;
+padding-top: 50px;
+padding-left: 50px;
+}
 .Choropleth {float:right}
 .dropdown-content {
   text-align: center;

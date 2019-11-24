@@ -25,7 +25,9 @@
   <p>Data was selected from Part A Inpatient Medicare and Medicaid data for 2017. There are over 500 unique procedures that can be visualized in the choropleth by means of the dropdown menu below. States and counties are colorized from cream to dark red and lowest to highest priced respectively. States or counties that appear grey have no data associated for the selected procedure. Meaning, no procedure was performed on an individual seeking payment through medicare or medicaid in that given county or state for the selected procedure. </P>
   <select id="menuDropdown" class="dropdown-content"><option>Search a procedure...</option></select>
   <input name="selectP" type="hidden" id="selectP">
-  <div class='Table'></div>
+  <div class='Table'>
+    <p style='text-align: center;'>Most Expensive</p>
+  </div>
   <div class='Choropleth'></div>
 </div>
 
@@ -44,7 +46,8 @@
 var width = 950
 var height = 600
 var padding = 20
-var widthT = 470
+var heightT = 350
+var widthT = 350
 
 
 // Appending the tooltip, the geoAlbers projection, the choropleth paths, the choropleth, and the table to the appropriate DIVS and Body.
@@ -61,12 +64,8 @@ var path = d3.geoPath().projection(projection)
 var svg = d3.select('.Choropleth')
     .append('svg')
     .attr('width', width)
-    .attr('height', height)
+    .attr('height', height);
 
-var svg1 = d3.select('.Table')
-    .append('svg')
-    .attr('width', widthT)
-    .attr('height', height)
 
 
 // Loading the data, the states.json, and counties.json file into the queue to then load as a results list on initialize.
@@ -95,7 +94,7 @@ function initialize(error, results) {
     var states = topojson.feature(results[1], results[1].objects.states).features
     var counties = topojson.feature(results[2], results[2].objects.counties).features
     // ------this creates a data file that only includes the procedure selected in the dropdown
-    var data = results[0].filter(function (d) {return d.procedure == X    });
+    var data = results[0].filter(function (d) {return d.procedure == X });
 
 //The dropdown menu variable
 var LProc = []
@@ -117,11 +116,8 @@ $.each(LProc, function(i, p) {
 
 $("#menuDropdown").select2();
 
-
-// var dropmenu = d3.select("#selectP");
-
 //setting X needed for update function to be the value in the dropdown
-// var X = d3.select("#menuDropdown").select("select").property("value")
+
 var X = $('#menuDropdown').val()
 console.log(X)
 //loading the window before the update function is run
@@ -129,7 +125,7 @@ d3.select(window).on("load", update(X));
 
 //the function that holds the choropleth and table functions and visualizations
 function update(X) {
-
+d3.selectAll('table').remove()
     var data = results[0].filter(function (d) {return d.procedure == X});
 
 //adding data as a key called 'medData' to the states which includes the neccessary geopath data as well as an average price over the state's counties for the selected procedure
@@ -148,7 +144,7 @@ function update(X) {
         }
       })
       f.medData = avgSC/count})
-
+console.log(states)
 //adding data as a key called 'medData' to the counties which includes the neccessary geopath data as well as the price for the selected procedure
     counties.forEach(function (f) {f.medData = data.find(function (d) {
           var nameC = f.properties.name.toUpperCase();
@@ -186,10 +182,47 @@ var color_states = d3.scaleQuantize()
           div.transition().duration(300).style("opacity", 0); })
         .on('click', function (d) { stateZoom(d.id) });
 
+var table = d3.select(".Table")
+          .append('table')
+          .attr('width', widthT)
+          .attr('height', heightT);
+
+  var columns = ['State', 'Cost']
+  var statesT = []
+  function stateT(states){
+      var data = states.filter(function (d) {if (isNaN(d.medData)){}
+            else{return d;} });
+    data.forEach(function(d){
+      statesT.push([d.properties.name, parseInt(d.medData)])})};
+  stateT(states)
+  statesT = statesT.sort(function(a, b) {return d3.descending(a[1], b[1]);})
+  console.log(statesT)
+      table.append('thead').append('tr')
+          .selectAll('th')
+          .data(columns)
+          .enter()
+          .append('th')
+          .text(function(d) {return d});
+      var tablebody = table.append("tbody");
+      rows = tablebody
+              .selectAll("tr")
+              .data(statesT.slice(0,10))
+              .enter()
+              .append("tr")
+      cells = rows.selectAll("td")
+          .data(function(d){return d})
+              .enter()
+              .append("td")
+              .text(function(d) {
+                return d});
+
+
+
+
 //The function that defines a full country view
     function usZoom() {
         var t = d3.transition().duration(800)
-
+        d3.selectAll('table').remove()
         projection.scale(height * 2).translate([width / 2, height / 2])
 
         statePaths.transition(t)
@@ -205,10 +238,46 @@ var color_states = d3.scaleQuantize()
             .attr('d', path)
             .style('opacity', 0)
             .remove()
-    };
+            var table = d3.select(".Table")
+                      .append('table')
+                      .attr('width', widthT)
+                      .attr('height', heightT);
+
+              var columns = ['State', 'Cost']
+              var statesT = []
+              function stateT(states){
+                  var data = states.filter(function (d) {if (isNaN(d.medData)){}
+                        else{return d;} });
+                data.forEach(function(d){
+                  statesT.push([d.properties.name, parseInt(d.medData)])})};
+              stateT(states)
+              statesT = statesT.sort(function(a, b) {return d3.descending(a[1], b[1]);})
+              console.log(statesT)
+                  table.append('thead').append('tr')
+                      .selectAll('th')
+                      .data(columns)
+                      .enter()
+                      .append('th')
+                      .text(function(d) {return d});
+                  var tablebody = table.append("tbody");
+                  rows = tablebody
+                          .selectAll("tr")
+                          .data(statesT.slice(0,10))
+                          .enter()
+                          .append("tr")
+                  cells = rows.selectAll("td")
+                      .data(function(d){return d})
+                          .enter()
+                          .append("td")
+                          .text(function(d) {
+                            return d});
+
+
+      };
 
 //The function that will zoom on to the appropriate counties selected by state
     function stateZoom(id) {
+        d3.selectAll('table').remove()
         var state = states.find(function (d) { return d.id === id })
         var stateCounties = counties.filter(function (d) {
           if(d.id > id*1000  && d.id < id*1000 + 1000){return d.id}
@@ -267,33 +336,47 @@ var color_states = d3.scaleQuantize()
             .attr('d', path)
             .style('opacity', 0)
             .remove()
+
+            var table = d3.select(".Table")
+                      .append('table')
+                      .attr('width', widthT)
+                      .attr('height', heightT);
+
+              var columns = ['County', 'Cost']
+              var countiesT = []
+              function countyT(stateCounties){
+                  var data = stateCounties.filter(function (d) {if (d.medData === undefined){}
+                    else{return d}});
+                data.forEach(function(d){
+                  countiesT.push([d.properties.name, +d.medData.cost])})};
+              countyT(stateCounties)
+              countiesT = countiesT.sort(function(a, b) {return d3.descending(a[1], b[1]);})
+              console.log(countiesT)
+                  table.append('thead').append('tr')
+                      .selectAll('th')
+                      .data(columns)
+                      .enter()
+                      .append('th')
+                      .text(function(d) {return d});
+                  var tablebody = table.append("tbody");
+                  rows = tablebody
+                          .selectAll("tr")
+                          .data(countiesT.slice(0,10))
+                          .enter()
+                          .append("tr")
+                  cells = rows.selectAll("td")
+                      .data(function(d){return d})
+                          .enter()
+                          .append("td")
+                          .text(function(d) {
+                            return d});
+
+
+
+
+
     };
 
-    // var header = Table.append("thead").append("tr");
-    // header
-    //         .selectAll("th")
-    //         .data(["Region", "1990", "2015", "Difference"])
-    //         .enter()
-    //         .append("th")
-    //         .text(function(d) { return d; });
-    // var tablebody = Table.append("tbody");
-    // rows = tablebody
-    //         .selectAll("tr")
-    //         .data(myArray)
-    //         .enter()
-    //         .append("tr");
-    // // We built the rows using the nested array - now each row has its own array.
-    // cells = rows.selectAll("td")
-    //     // each row has data associated; we get it and enter it for the cells.
-    //         .data(function(d) {
-    //             console.log(d);
-    //             return d;
-    //         })
-    //         .enter()
-    //         .append("td")
-    //         .text(function(d) {
-    //             return d;
-    //         });
 
 
 
@@ -301,6 +384,7 @@ var color_states = d3.scaleQuantize()
       // var selectedGroup = (d3.select(this).select("select").property("value"));
       var selectedGroup = $('#menuDropdown').val();
       svg.selectAll('.state').remove()
+      d3.selectAll('table').remove()
       usZoom()
       update(selectedGroup)
       console.log(selectedGroup)
