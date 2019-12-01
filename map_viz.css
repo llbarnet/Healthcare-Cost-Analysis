@@ -61,3 +61,12 @@ padding-left: 50px;
   font-family: 'Alata';
   padding-bottom: 50px;
 }
+
+a.button {
+    -webkit-appearance: button;
+    -moz-appearance: button;
+    appearance: link_button;
+
+    text-decoration: none;
+    color: black;
+}

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="topojson.v2.min.js"></script>
+<script src="d3-tip.min.js"></script>
+<script src="d3-dsv.min.js"></script>
+<script src="topojson.v2.min.js"></script>
+<script src="d3-tip.min.js"></script>
+<link rel = "stylesheet" type = "text/css" href = "index.css" />
+
+<body>
+  <div id="forecast" class="absolute">
+
+    <select id = 'condition'>
+      <option> Atrial Fibrillation</option>
+      <option> Chronic Kidney Disease</option>
+      <option> Obstructive Pulmonary Disease</option>
+      <option> Depression</option>
+      <option> Diabetes</option>
+      <option> Ischemic Heart Disease</option>
+      <option> Hyperlipidemia</option>
+      <option> Hyptertension</option>
+      <option> Arthritis</option>
+      <option> Mental Illness</option>
+      <option> Stroke</option>
+      <option> Asthma</option>
+    </select>
+
+    <input id = 'state_name' type="text" name="FirstName" value="Alaska">
+
+    <button
+      id="update_button"
+      type="button"
+      class="button"
+      value="Show Forecast"
+      onclick="showForecast()">
+      Show Forecast
+    </button>
+
+    <button
+      id="link_button"
+      type="button"
+      class="button"
+      value="Go to Homepage"
+      onclick="location.href='/map_viz.html';">
+      Homepage
+    </button>
+  </div>
+
+  <div id = 'graph'>
+  </div>
+
+  <div id = 'us_map'>
+  </div>
+
+
+
+  <script type="text/javascript" src = "index.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<link rel = "stylesheet" type = "text/css" href = "index.css" />
+
+<body>
+  <div id="forecast" class="absolute">
+    <button
+      id="updateButton"
+      type="button"
+      class="button"
+      value="Show Forecast"
+      onclick="showForecast()">
+      Show Forecast
+    </button>
+
+    <select id = 'condition'>
+      <option> Atrial Fibrillation</option>
+      <option> Chronic Kidney Disease</option>
+      <option> Obstructive Pulmonary Disease</option>
+      <option> Depression</option>
+      <option> Diabetes</option>
+      <option> Ischemic Heart Disease</option>
+      <option> Hyperlipidemia</option>
+      <option> Hyptertension</option>
+      <option> Arthritis</option>
+      <option> Mental Illness</option>
+      <option> Stroke</option>
+      <option> Asthma</option>
+    </select>
+
+    <input id = 'state_name' type="text" name="FirstName" value="Alaska"><br>
+  </div>
+
+  <div id = 'graph'>
+  </div>
+
+  <div id = 'graph'>
+  </div>
+
+
+
+  <script type="text/javascript" src = "index.js"></script>
+</body>
+</html>
